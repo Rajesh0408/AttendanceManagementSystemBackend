@@ -5,6 +5,7 @@ from model import *
 from datetime import datetime
 from sqlalchemy import update, and_
 import json, random, hashlib
+import os
 
 api = Api(app)
 
@@ -603,6 +604,8 @@ api.add_resource(AbsenceListStudent,'/AbsenceListStudent/<string:user_id>')
 api.add_resource(ViewFormStudent,'/ViewFormStudent/<int:absent_id>')
 api.add_resource(DailyAttendanceStudent,'/DailyAttendanceStudent/<string:user_id>')
 
+port = int(os.environ.get("PORT", 5000))
 
 if __name__ == '__main__':
-   app.run(debug=True)
+   app.run(debug=True, host="0.0.0.0", port=port)
+
