@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String, Boolean, Date, ForeignKey, DateTime
 from datetime import datetime, date
 from flask_mail import Mail, Message
+import os
 
 app = Flask(__name__)
 
@@ -15,9 +16,9 @@ db = SQLAlchemy(app)
 app.config['MAIL_SERVER'] = 'smtp.googlemail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'hariniks0618@gmail.com'
-app.config['MAIL_PASSWORD'] = 'gfah xgwu uohv oxbw' # app pwd made in gacc
-app.config['MAIL_DEFAULT_SENDER'] = 'hariniks0618@gmail.com'
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_USERNAME')
 mail = Mail(app)
 
 if __name__ == '__main__':
