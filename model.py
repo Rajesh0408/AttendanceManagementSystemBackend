@@ -6,7 +6,8 @@ from flask_mail import Mail, Message
 
 app = Flask(__name__)
 
-DB_URL = "postgresql://postgres:2021239018@localhost:5432/amsdb4"
+# DB_URL = "postgresql://postgres:2021239018@localhost:5432/amsdb4"
+DB_URL = "postgresql://attendance_management_system_lcoo_user:S0kpoU7xtWVmCGtB7V53HuWcdOhxpdNY@dpg-d30o93ripnbc73di02lg-a/attendance_management_system_lcoo"
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
 app.app_context().push()
 db = SQLAlchemy(app)
