@@ -147,13 +147,14 @@ class UserRegister(Resource):
                     ad_class = 0
                 add_user = staff_details(user_id = args["user_id"],user_name = args["user_name"],email_id = args["email_id"],password = pwd, advisor_class=ad_class, role = args['role'])
         db.session.add(add_user)
+        add_user.is_active = 1
         db.session.commit()
-        email_id = args["email_id"]
-        code = random.randint(100001, 999999)
-        send_otp_email(email_id, code)
-        codeEncrypted = msg_encryption(str(code))
-        add_user.otp = codeEncrypted
-        db.session.commit()
+        # email_id = args["email_id"]
+        # code = random.randint(100001, 999999)
+        # send_otp_email(email_id, code)
+        # codeEncrypted = msg_encryption(str(code))
+        # add_user.otp = codeEncrypted
+        # db.session.commit()
         return "otp has been sent to your registered mail...", 201
         
     def put(self):
