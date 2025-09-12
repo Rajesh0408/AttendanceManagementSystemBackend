@@ -3,7 +3,7 @@ from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
 from model import app
 from model import *
 from datetime import datetime
-from sqlalchemy import update, and_
+from sqlalchemy import update, and_, func
 import json, random, hashlib
 import os
 
@@ -296,7 +296,14 @@ class CoursesInSem(Resource):
 class MyStudentList(Resource):
     def get(self,user_id):         # The advisor needs to get the list of her/his students to enroll for a course and also for view forms...
         staff = staff_details.query.filter_by(user_id = user_id).first()
-        students = db.session.query(student_details.user_id, student_details.user_name).filter(and_(student_details.user_id.cast(Integer) > (staff.advisor_class*10000), student_details.user_id.cast(Integer) < ((staff.advisor_class+1)*10000) )).all()
+        # students = db.session.query(student_details.user_id, student_details.user_name).filter(and_(student_details.user_id.cast(Integer) > (staff.advisor_class*10000), student_details.user_id.cast(Integer) < ((staff.advisor_class+1)*10000) )).all()
+        students = (
+            db.session.query(student_details.user_id, student_details.user_name)
+            .filter(
+                func.substr(student_details.user_id, 5, 2) == func.substr(staff.advisor_class.cast(String), -2, 2)
+            )
+            .all()
+        )
         student_list = []
         for student in students:
             count = absence_intimation.query.filter_by(user_id = student.user_id).count() # the count is included for view form page, drop it in enrollment page
