@@ -9,7 +9,8 @@ app = Flask(__name__)
 
 # DB_URL = "postgresql://postgres:2021239018@localhost:5432/amsdb4"
 # DB_URL = "postgresql://attendance_management_system_lcoo_user:S0kpoU7xtWVmCGtB7V53HuWcdOhxpdNY@dpg-d30o93ripnbc73di02lg-a/attendance_management_system_lcoo"
-DB_URL = "postgresql://attendance_management_system_database_user:y6Dkuepg4muWdmrkpZg6mGcodxk9E8FW@dpg-d32265nfte5s7382qftg-a/attendance_management_system_database"
+# DB_URL = "postgresql://attendance_management_system_database_user:y6Dkuepg4muWdmrkpZg6mGcodxk9E8FW@dpg-d32265nfte5s7382qftg-a/attendance_management_system_database"
+DB_URL = "postgresql://attendance_management_system_database_user:y6Dkuepg4muWdmrkpZg6mGcodxk9E8FW@dpg-d32265nfte5s7382qftg-a.oregon-postgres.render.com/attendance_management_system_database"
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL
 app.app_context().push()
 db = SQLAlchemy(app)

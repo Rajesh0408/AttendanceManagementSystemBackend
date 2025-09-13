@@ -326,6 +326,8 @@ class MyStudentEnrollment(Resource):
 class OverallAttendanceforAdvisor(Resource):
     def get(self,user_id):     # to view attendance % hold by every student of the advisor's class
         staff = staff_details.query.filter_by(user_id = user_id).first()
+        if staff is None:
+            abort(404, message="Staff with this user_id not found")
         students = db.session.query(student_details.user_id, student_details.user_name).filter(and_(student_details.user_id.cast(Integer) > (staff.advisor_class*10000), student_details.user_id.cast(Integer) < ((staff.advisor_class+1)*10000) )).all()
         student_dict = {}
         course_dict = {}
@@ -559,9 +561,21 @@ class ViewFormStudent(Resource):
     
 class DailyAttendanceStudent(Resource):
     @marshal_with(daily_att_fields)
-    def get(self,user_id):
+    def post(self,user_id):
         args = daily_att.parse_args()
-        courses = db.session.query(course.course_code).join(student_enrolled, student_enrolled.course_code == course.course_code).filter(student_enrolled.user_id == user_id)
+        print(f'user_id', user_id)
+        args2 = request.get_json()
+        from_date = args2['from_date']
+        to_date = args2['to_date']
+        course_code = args2.get('course_code')
+
+        # courses = db.session.query(course.course_code).join(student_enrolled, student_enrolled.course_code == course.course_code).filter(student_enrolled.user_id == user_id)
+        courses = db.session.query(course.course_code, course.course_name)\
+            .join(student_enrolled, student_enrolled.course_code == course.course_code)\
+            .filter(student_enrolled.user_id == user_id)\
+            .all()
+
+        print(f'courses {courses}')
         att_dict = {}
         att_list = []
         result_dict = {}
@@ -575,10 +589,10 @@ class DailyAttendanceStudent(Resource):
             if not first_day_class or not last_day_class:
                 abort(409, message="You haven't took class")
             if to_date >= date.today():
-                args["to_date"] = last_day_class
-            elif from_date <= first_day_class:
-                from_date = first_day_class
-            key = [{"course_code": i.course_code, "course_name": i.course_name}]
+                to_date = last_day_class.class_date
+            elif from_date <= first_day_class.class_date:
+                from_date = first_day_class.class_date
+            key = f"{i.course_code} - {i.course_name}"
             att = attendance.query.filter(and_(attendance.class_date >= from_date, attendance.class_date <= to_date, attendance.course_code == i.course_code, attendance.user_id == user_id))
             for i in att:
                 att_dict = {"class_date": i.class_date, "class_hour": i.class_hour, "status": i.status}
