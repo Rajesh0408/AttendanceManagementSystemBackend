@@ -3,7 +3,7 @@ from flask_restful import Resource, Api, reqparse, abort, fields, marshal_with
 from model import app
 from model import *
 from datetime import datetime
-from sqlalchemy import update, and_, func
+from sqlalchemy import update, and_, func, cast
 import json, random, hashlib
 import os
 
@@ -14,8 +14,8 @@ user_fields= {
    'user_name': fields.String,
    'email_id': fields.String,
    'password': fields.String,
-   'advisor_year':fields.String,
-   'advisor_branch': fields.String,
+   'batch':fields.String,
+   'branch': fields.String,
    'role': fields.String,
 }
 
@@ -70,8 +70,8 @@ user_post.add_argument("user_name", type=str, help="user_name is required", requ
 user_post.add_argument("email_id", type=str, help="email_id is required", required=True)
 user_post.add_argument("role", type=str, help="role is required", required=True)
 user_post.add_argument("password", type=str, help="password is required", required=True)
-user_post.add_argument("advisor_year", type=str)
-user_post.add_argument("advisor_branch", type=str)
+user_post.add_argument("batch", type=str)
+user_post.add_argument("branch", type=str)
 
 user_put = reqparse.RequestParser()
 user_put.add_argument("user_id", type=str, help="user_id is required", required=True)
@@ -138,14 +138,18 @@ class UserRegister(Resource):
             if length == 10:
                 add_user = student_details(user_id = args["user_id"],user_name = args["user_name"],email_id = args["email_id"],password = pwd)
             if length == 6:
-                if args["advisor_branch"]:
-                    if args["advisor_branch"] == 'CS':
-                        ad_class = int(args["advisor_year"] + '23')
+                print('----------------------------------------------')
+                print(args["branch"])
+                if args["branch"]:
+                    
+                    if args["branch"] == 'CS':
+                        ad_class = int(args["batch"] + '23')
                     else:
-                        ad_class = int(str(args["advisor_year"]) + '24')
+                        ad_class = int(str(args["batch"]) + '24')
                 else:
                     ad_class = 0
                 add_user = staff_details(user_id = args["user_id"],user_name = args["user_name"],email_id = args["email_id"],password = pwd, advisor_class=ad_class, role = args['role'])
+
         db.session.add(add_user)
         add_user.is_active = 1
         db.session.commit()
@@ -296,18 +300,13 @@ class CoursesInSem(Resource):
 class MyStudentList(Resource):
     def get(self,user_id):         # The advisor needs to get the list of her/his students to enroll for a course and also for view forms...
         staff = staff_details.query.filter_by(user_id = user_id).first()
-        # students = db.session.query(student_details.user_id, student_details.user_name).filter(and_(student_details.user_id.cast(Integer) > (staff.advisor_class*10000), student_details.user_id.cast(Integer) < ((staff.advisor_class+1)*10000) )).all()
-        students = (
-            db.session.query(student_details.user_id, student_details.user_name)
-            .filter(
-                func.substr(student_details.user_id, 5, 2) == func.substr(staff.advisor_class.cast(String), -2, 2)
-            )
-            .all()
-        )
+        students = db.session.query(student_details.user_id, student_details.user_name).filter(and_(student_details.user_id.cast(Integer) > (staff.advisor_class*10000), student_details.user_id.cast(Integer) < ((staff.advisor_class+1)*10000) )).all()
+        
         student_list = []
         for student in students:
             count = absence_intimation.query.filter_by(user_id = student.user_id).count() # the count is included for view form page, drop it in enrollment page
             student_list.append({"user_id":student.user_id,"user_name":student.user_name,"count":count})
+        print(student_list)
         return student_list
         
 class MyStudentEnrollment(Resource):
@@ -330,9 +329,10 @@ class OverallAttendanceforAdvisor(Resource):
         students = db.session.query(student_details.user_id, student_details.user_name).filter(and_(student_details.user_id.cast(Integer) > (staff.advisor_class*10000), student_details.user_id.cast(Integer) < ((staff.advisor_class+1)*10000) )).all()
         student_dict = {}
         course_dict = {}
-        course_list = []
+        
         student_list = []
         for student in students:
+            course_list = []
             courses = db.session.query(course.course_code, course.course_name).join(student_enrolled, student_enrolled.course_code == course.course_code).filter(student_enrolled.user_id == student.user_id).all()
             for i in courses:
                 total_hours_query = db.session.query(db.func.sum(attendance.class_hour)).filter_by(course_code= i.course_code,user_id=student.user_id).first()
@@ -529,7 +529,7 @@ class TakeForm(Resource):
         dt = datetime.now()
         if is_intimated:
             abort(404, message="Already the absence form for this date and course is intimated!!")
-        args = absent_post.parse_args()
+        # args = absent_post.parse_args()
         add_absence = absence_intimation(user_id = args["user_id"],course_code=args["course_code"],absent_date=args['absent_date'],absent_hour=args['absent_hour'],absent_reason=args['absent_reason'])
         db.session.add(add_absence)
         db.session.commit()
